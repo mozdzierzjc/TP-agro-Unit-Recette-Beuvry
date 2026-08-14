@@ -66,7 +66,10 @@
 
   <div class="section-title">STOCK RECETTE PRODUITE (jus, alimenté automatiquement par l'unité de recette)</div>
   <div class="stock-wrap">
-    <div class="stock-table" id="stockTableRecette" style="flex:1;"></div>
+    <div class="stock-table" id="stockTableRecette" style="flex:2;"></div>
+    <div class="reapro-panel" style="flex:1;">
+      <button class="reapro-btn" id="btnRazRecette" style="background:var(--red);">RAZ STOCK RECETTE (tout à 0)</button>
+    </div>
   </div>
 </div>
 
@@ -154,10 +157,18 @@
   document.querySelectorAll(".reapro-btn").forEach(btn=>{
     btn.addEventListener("click", ()=>{
       const mat = btn.getAttribute("data-mat");
+      if(!mat) return;
       const def = MATERIALS.find(m=>m.key===mat) || CONDITIONNEMENT.find(m=>m.key===mat);
       if(!confirm("Réapprovisionner "+def.label+" à "+def.full+" "+def.unit+" ?")) return;
       db.ref("stock/"+mat).set(def.full);
     });
+  });
+
+  $("btnRazRecette").addEventListener("click", ()=>{
+    if(!confirm("Remettre TOUS les stocks recette (jus) à 0 ?")) return;
+    const zeros = {};
+    Object.keys(RECETTES_LABELS).forEach(k=> zeros[k]=0);
+    db.ref("stock/recette").set(zeros);
   });
 })();
 </script>
