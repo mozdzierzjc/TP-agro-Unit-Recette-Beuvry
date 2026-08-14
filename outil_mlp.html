@@ -1,0 +1,499 @@
+<style>
+  :root{
+    --navy:#1B2A4A; --orange:#E87722; --orange-l:#FCE4D0;
+    --green:#1E8A4C; --green-l:#E4F5EA; --red:#C0392B; --red-l:#FBE7E4;
+    --amber:#B8860B; --amber-l:#FBF0D9; --grey:#6B7280; --grey-l:#F2F3F5;
+    --bg:#F6F7FA; --card:#FFFFFF;
+  }
+  *{box-sizing:border-box;}
+  #app{font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);
+    color:#1a1a1a;padding:14px;max-width:900px;margin:0 auto;}
+  h1{font-size:20px;color:var(--navy);margin:0 0 2px 0;}
+  .subtitle{color:var(--orange);font-weight:700;font-size:13px;margin:0 0 14px 0;
+    border-bottom:2px solid var(--orange);padding-bottom:10px;}
+  .card{background:var(--card);border-radius:10px;padding:16px;margin-bottom:14px;
+    box-shadow:0 1px 3px rgba(0,0,0,0.08);}
+  .step-title{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--navy);
+    font-size:15px;margin-bottom:12px;}
+  .step-num{background:var(--navy);color:#fff;width:24px;height:24px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
+  label{display:block;font-size:12px;font-weight:600;color:var(--grey);margin:8px 0 4px;}
+  select,input[type=text],input[type=number]{width:100%;padding:10px;border:1px solid #D8DCE3;
+    border-radius:8px;font-size:15px;background:#fff;}
+  .row{display:flex;gap:10px;flex-wrap:wrap;}
+  .row > div{flex:1;min-width:140px;}
+  .btn{border:none;border-radius:8px;padding:11px 16px;font-size:14px;font-weight:700;cursor:pointer;}
+  .btn-orange{background:var(--orange);color:#fff;}
+  .btn-navy{background:var(--navy);color:#fff;}
+  .btn-outline{background:#fff;color:var(--navy);border:1.5px solid var(--navy);}
+  .btn:disabled{opacity:0.4;cursor:not-allowed;}
+  .pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;}
+  .pill-ok{background:var(--green-l);color:var(--green);}
+  .pill-warn{background:var(--amber-l);color:var(--amber);}
+  .pill-bad{background:var(--red-l);color:var(--red);}
+  .banner{padding:10px 12px;border-radius:8px;font-size:13px;margin-top:10px;font-weight:600;}
+  .banner-ok{background:var(--green-l);color:var(--green);}
+  .banner-warn{background:var(--amber-l);color:var(--amber);}
+  .banner-bad{background:var(--red-l);color:var(--red);}
+  .hidden{display:none !important;}
+  .flexend{display:flex;justify-content:flex-end;gap:10px;margin-top:12px;}
+  .check-row{display:flex;justify-content:space-between;align-items:center;
+    padding:10px 4px;border-bottom:1px solid #EEE;font-size:14px;font-weight:600;}
+  .check-row:last-child{border-bottom:none;}
+  .toggle-row{display:flex;gap:8px;}
+  .toggle-btn{flex:1;padding:9px;border-radius:8px;border:1.5px solid #D8DCE3;background:#fff;
+    font-weight:700;font-size:13px;cursor:pointer;}
+  .toggle-btn.ok{border-color:var(--green);background:var(--green-l);color:var(--green);}
+  .toggle-btn.bad{border-color:var(--red);background:var(--red-l);color:var(--red);}
+  .counter-box{display:flex;align-items:center;gap:14px;justify-content:center;padding:16px;
+    background:var(--grey-l);border-radius:10px;margin-bottom:10px;}
+  .counter-num{font-size:32px;font-weight:800;color:var(--navy);min-width:70px;text-align:center;}
+  .counter-target{font-size:13px;color:var(--grey);}
+  .recap-line{font-size:13px;margin-bottom:4px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;}
+  th{background:var(--navy);color:#fff;padding:7px;text-align:center;font-size:12px;}
+  td{padding:7px;text-align:center;border-bottom:1px solid #EEE;}
+</style>
+
+<div id="app">
+  <h1>Poste MLP — Conditionnement</h1>
+  <div class="subtitle">Checklist · OF · Pré-série · Série · Changement de format — AFPI / UIMM CIMA</div>
+
+  <!-- ÉTAPE 0 : CHECKLIST -->
+  <div class="card" id="cardChecklist">
+    <div class="step-title"><span class="step-num">0</span> Checklist prise de poste</div>
+    <div class="check-row"><span>Propreté du poste</span>
+      <div class="toggle-row" style="max-width:200px;">
+        <button class="toggle-btn" data-chk="proprete" data-val="oui">Conforme</button>
+        <button class="toggle-btn" data-chk="proprete" data-val="non">Non conforme</button>
+      </div>
+    </div>
+    <div class="check-row"><span>Pression air (MPa) — cible 0,5 ± 0,05</span>
+      <input type="number" step="0.01" id="pressionAir" style="width:110px;" placeholder="ex : 0.50">
+    </div>
+    <div class="check-row"><span>Sécurité — porte fermée</span>
+      <div class="toggle-row" style="max-width:200px;">
+        <button class="toggle-btn" data-chk="porte" data-val="oui">Conforme</button>
+        <button class="toggle-btn" data-chk="porte" data-val="non">Non conforme</button>
+      </div>
+    </div>
+    <div class="check-row"><span>Arrêt d'urgence testé</span>
+      <div class="toggle-row" style="max-width:200px;">
+        <button class="toggle-btn" data-chk="au" data-val="oui">Conforme</button>
+        <button class="toggle-btn" data-chk="au" data-val="non">Non conforme</button>
+      </div>
+    </div>
+    <div class="check-row"><span>Aucun élément cassé / manquant</span>
+      <div class="toggle-row" style="max-width:200px;">
+        <button class="toggle-btn" data-chk="casse" data-val="oui">Conforme</button>
+        <button class="toggle-btn" data-chk="casse" data-val="non">Non conforme</button>
+      </div>
+    </div>
+    <div id="checklistBanner"></div>
+    <div class="flexend">
+      <button class="btn btn-orange" id="btnValiderChecklist">Valider la checklist</button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 1 : SÉLECTION OF -->
+  <div class="card hidden" id="cardOf">
+    <div class="step-title"><span class="step-num">1</span> Sélection de l'OF conditionnement</div>
+    <select id="selOf"><option value="">— choisir un OF validé —</option></select>
+    <div id="ofRecap"></div>
+    <div class="flexend">
+      <button class="btn btn-orange" id="btnChargerOf" disabled>Charger cet OF</button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 2 : PRÉ-SÉRIE -->
+  <div class="card hidden" id="cardPreserie">
+    <div class="step-title"><span class="step-num">2</span> Pré-série (validation des réglages)</div>
+    <p style="font-size:12px;color:var(--grey);">Ces pièces ne comptent pas dans la production. Elles servent à valider le dosage avant de lancer la série.</p>
+    <label>Nombre de pièces test</label>
+    <div class="toggle-row" style="max-width:220px;">
+      <button class="toggle-btn" data-nb="3">3 pièces</button>
+      <button class="toggle-btn" data-nb="5">5 pièces</button>
+    </div>
+    <div id="preserieInputs" style="margin-top:12px;"></div>
+    <div id="preserieBanner"></div>
+    <div class="flexend">
+      <button class="btn btn-outline" id="btnRefairePreserie">Refaire un essai</button>
+      <button class="btn btn-orange" id="btnValiderPreserie" disabled>Valider et lancer la série</button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 3 : SÉRIE -->
+  <div class="card hidden" id="cardSerie">
+    <div class="step-title"><span class="step-num">3</span> Production série</div>
+    <div id="serieContent"></div>
+    <div id="serieBanner"></div>
+    <div class="flexend">
+      <button class="btn btn-orange" id="btnTerminerSerie" disabled>Terminer la série & mise en caisse</button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 4 : CHANGEMENT DE FORMAT -->
+  <div class="card hidden" id="cardFormat">
+    <div class="step-title"><span class="step-num">4</span> Changement de format (pot → flacon)</div>
+    <p style="font-size:13px;">Réalisez le changement de format sur la machine (réglage îlot dosage + désactivation du bouchonnage automatique). Une fois fait, cochez ci-dessous.</p>
+    <div class="toggle-row" style="max-width:320px;">
+      <button class="toggle-btn" id="btnFormatFait" data-val="oui">Changement de format effectué</button>
+    </div>
+    <div class="flexend">
+      <button class="btn btn-orange" id="btnContinuerFlacon" disabled>Continuer vers l'OF flacon</button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 5 : TRAÇABILITÉ FINALE -->
+  <div class="card hidden" id="cardTraca">
+    <div class="step-title"><span class="step-num">5</span> Fiche de traçabilité conditionnement</div>
+    <div id="tracaRecap"></div>
+    <label>Observations</label>
+    <input type="text" id="observationsFinales" placeholder="Facultatif">
+    <div class="flexend">
+      <button class="btn btn-orange" id="btnSaveTraca">Enregistrer la traçabilité</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script>
+(function(){
+  const firebaseConfig = {
+    apiKey: "AIzaSyCwckomQVcJUGZLLkL9TsCFyVRjNoPYnJY",
+    authDomain: "tp-agro-cima.firebaseapp.com",
+    databaseURL: "https://tp-agro-cima-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "tp-agro-cima",
+    storageBucket: "tp-agro-cima.firebasestorage.app",
+    messagingSenderId: "621802049861",
+    appId: "1:621802049861:web:1fe29c3e2f21aadb49ee2c"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const $ = id => document.getElementById(id);
+  const CONTENANT_LABELS = { pot:"Pot (orange+gris)", flacon:"Flacon" };
+
+  // ---------- Stock helpers ----------
+  async function decrementStock(path, qty){
+    if(!qty || qty<=0) return;
+    try{
+      await db.ref("stock/"+path).transaction(current=>{
+        const base = (current===null||current===undefined) ? 0 : current;
+        return Math.max(0, base - qty);
+      });
+    }catch(e){ console.warn(e); }
+  }
+  async function incrementStock(path, qty){
+    if(!qty || qty<=0) return;
+    try{
+      await db.ref("stock/"+path).transaction(current=>{
+        const base = (current===null||current===undefined) ? 0 : current;
+        return base + qty;
+      });
+    }catch(e){ console.warn(e); }
+  }
+
+  // ---------- État global ----------
+  let checklistState = { proprete:null, porte:null, au:null, casse:null };
+  let currentOf = null;
+  let preserieNb = null;
+  let preserieValidated = false;
+  let serieState = { orange:0, gris:0, flacon:0 };
+  let history = []; // OF traités dans cette session (pour la traçabilité finale)
+
+  // ========== ÉTAPE 0 : CHECKLIST ==========
+  document.querySelectorAll('[data-chk]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const chk = btn.getAttribute('data-chk');
+      const val = btn.getAttribute('data-val');
+      checklistState[chk] = val;
+      document.querySelectorAll(`[data-chk="${chk}"]`).forEach(b=>b.classList.remove('ok','bad'));
+      btn.classList.add(val==='oui' ? 'ok' : 'bad');
+    });
+  });
+
+  $("btnValiderChecklist").addEventListener("click", ()=>{
+    const pression = parseFloat($("pressionAir").value);
+    const pressionOk = !isNaN(pression) && Math.abs(pression-0.5)<=0.05;
+    const allChecked = Object.values(checklistState).every(v=>v!==null);
+    const banner = $("checklistBanner");
+
+    if(!allChecked || isNaN(pression)){
+      banner.innerHTML = '<div class="banner banner-warn">Complétez tous les points de la checklist avant de continuer.</div>';
+      return;
+    }
+    const allOk = Object.values(checklistState).every(v=>v==='oui') && pressionOk;
+    if(!allOk){
+      banner.innerHTML = '<div class="banner banner-bad">✗ Checklist non conforme — NE PAS DÉMARRER. Signalez au formateur avant toute production.</div>';
+      return;
+    }
+    banner.innerHTML = '<div class="banner banner-ok">✓ Checklist conforme — poste prêt.</div>';
+    $("cardOf").classList.remove("hidden");
+    $("cardOf").scrollIntoView({behavior:"smooth"});
+  });
+
+  // ========== ÉTAPE 1 : SÉLECTION OF ==========
+  db.ref("of_mlp").on("value", snap=>{
+    const val = snap.val() || {};
+    const sel = $("selOf");
+    const current = sel.value;
+    sel.innerHTML = '<option value="">— choisir un OF validé —</option>';
+    Object.values(val)
+      .filter(of => of.statutProd !== "termine")
+      .forEach(of=>{
+        const o = document.createElement("option");
+        o.value = of.ofNum;
+        o.textContent = `${of.ofNum} — ${of.recette} — ${CONTENANT_LABELS[of.contenant]||of.contenant} — ${of.dosage}g`;
+        sel.appendChild(o);
+      });
+    if(current) sel.value = current;
+  });
+
+  $("selOf").addEventListener("change", async ()=>{
+    const ofNum = $("selOf").value;
+    $("btnChargerOf").disabled = !ofNum;
+    $("ofRecap").innerHTML = "";
+    if(!ofNum) return;
+    const snap = await db.ref("of_mlp/"+ofNum).once("value");
+    const of = snap.val();
+    if(!of) return;
+    $("ofRecap").innerHTML = `
+      <div class="recap-line"><b>Recette :</b> ${of.recette}</div>
+      <div class="recap-line"><b>Contenant :</b> ${CONTENANT_LABELS[of.contenant]||of.contenant}</div>
+      <div class="recap-line"><b>Dosage cible :</b> ${of.dosage} g ± ${of.tolerance} %</div>
+      <div class="recap-line"><b>Queue de coulée :</b> ${of.queueCoulee} g</div>
+      <div class="recap-line"><b>Nombre à produire :</b> ${of.nbPots}</div>
+    `;
+  });
+
+  $("btnChargerOf").addEventListener("click", async ()=>{
+    const ofNum = $("selOf").value;
+    const snap = await db.ref("of_mlp/"+ofNum).once("value");
+    currentOf = snap.val();
+    if(!currentOf) return;
+    preserieValidated = false;
+    preserieNb = null;
+    serieState = { orange:0, gris:0, flacon:0 };
+    $("cardPreserie").classList.remove("hidden");
+    $("preserieInputs").innerHTML = "";
+    $("preserieBanner").innerHTML = "";
+    $("btnValiderPreserie").disabled = true;
+    document.querySelectorAll('[data-nb]').forEach(b=>b.classList.remove('active'));
+    $("cardSerie").classList.add("hidden");
+    $("cardPreserie").scrollIntoView({behavior:"smooth"});
+  });
+
+  // ========== ÉTAPE 2 : PRÉ-SÉRIE ==========
+  document.querySelectorAll('[data-nb]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      preserieNb = parseInt(btn.getAttribute('data-nb'),10);
+      document.querySelectorAll('[data-nb]').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      renderPreserieInputs();
+    });
+  });
+
+  function renderPreserieInputs(){
+    let html = '<table><tr><th>Pièce</th><th>Poids mesuré (g)</th></tr>';
+    for(let i=1;i<=preserieNb;i++){
+      html += `<tr><td>#${i}</td><td><input type="number" step="0.1" class="preserie-w" id="pw_${i}" style="width:90px;text-align:center;"></td></tr>`;
+    }
+    html += '</table>';
+    $("preserieInputs").innerHTML = html;
+    document.querySelectorAll('.preserie-w').forEach(el=>el.addEventListener('input', checkPreserie));
+  }
+
+  function checkPreserie(){
+    const weights = [];
+    for(let i=1;i<=preserieNb;i++){
+      const v = parseFloat($("pw_"+i).value);
+      if(!isNaN(v)) weights.push(v);
+    }
+    const banner = $("preserieBanner");
+    if(weights.length < preserieNb){
+      banner.innerHTML = "";
+      $("btnValiderPreserie").disabled = true;
+      return;
+    }
+    const avg = weights.reduce((a,b)=>a+b,0)/weights.length;
+    const tolAbs = currentOf.dosage * currentOf.tolerance/100;
+    const ecart = Math.abs(avg - currentOf.dosage);
+    const ok = ecart <= tolAbs;
+    banner.innerHTML = ok
+      ? `<div class="banner banner-ok">✓ Moyenne : ${avg.toFixed(1)} g (cible ${currentOf.dosage} g ± ${tolAbs.toFixed(1)} g) — réglages validés.</div>`
+      : `<div class="banner banner-bad">✗ Moyenne : ${avg.toFixed(1)} g — hors tolérance (cible ${currentOf.dosage} g ± ${tolAbs.toFixed(1)} g). Ajustez le dosage et refaites un essai.</div>`;
+    $("btnValiderPreserie").disabled = !ok;
+    preserieValidated = ok;
+
+    // Consommation matière des pièces test (n'entrent pas dans la production comptée)
+    if(ok){
+      const matKey = currentOf.contenant==="flacon" ? "flacons" : null; // pot: décompte au clic pendant la série, pas ici
+      decrementStock("recette/"+currentOf.recetteKey, avg*weights.length);
+    }
+  }
+
+  $("btnRefairePreserie").addEventListener("click", ()=>{
+    if(preserieNb) renderPreserieInputs();
+    $("preserieBanner").innerHTML = "";
+    $("btnValiderPreserie").disabled = true;
+  });
+
+  $("btnValiderPreserie").addEventListener("click", ()=>{
+    renderSerie();
+    $("cardSerie").classList.remove("hidden");
+    $("cardSerie").scrollIntoView({behavior:"smooth"});
+  });
+
+  // ========== ÉTAPE 3 : SÉRIE ==========
+  function renderSerie(){
+    const of = currentOf;
+    if(of.contenant === "pot"){
+      const targetOrange = Math.ceil(of.nbPots/2);
+      const targetGris = Math.floor(of.nbPots/2);
+      $("serieContent").innerHTML = `
+        <div class="row">
+          <div>
+            <div class="counter-box">
+              <button class="btn btn-outline" onclick="window.__serieDec('orange')">−</button>
+              <div><div class="counter-num" id="cntOrange">0</div><div class="counter-target">/ ${targetOrange} orange</div></div>
+              <button class="btn btn-navy" onclick="window.__serieInc('orange')">+ Pot orange</button>
+            </div>
+          </div>
+          <div>
+            <div class="counter-box">
+              <button class="btn btn-outline" onclick="window.__serieDec('gris')">−</button>
+              <div><div class="counter-num" id="cntGris">0</div><div class="counter-target">/ ${targetGris} gris</div></div>
+              <button class="btn btn-navy" onclick="window.__serieInc('gris')">+ Pot gris</button>
+            </div>
+          </div>
+        </div>
+      `;
+    } else {
+      $("serieContent").innerHTML = `
+        <div class="counter-box">
+          <button class="btn btn-outline" onclick="window.__serieDec('flacon')">−</button>
+          <div><div class="counter-num" id="cntFlacon">0</div><div class="counter-target">/ ${of.nbPots} flacons</div></div>
+          <button class="btn btn-navy" onclick="window.__serieInc('flacon')">+ Flacon (bouchonné manuellement)</button>
+        </div>
+      `;
+    }
+    updateSerieBanner();
+  }
+
+  window.__serieInc = function(type){
+    serieState[type]++;
+    const stockPath = type==="orange" ? "potOrange" : type==="gris" ? "potGris" : "flacons";
+    decrementStock(stockPath, 1);
+    decrementStock("bouchons", 1);
+    decrementStock("recette/"+currentOf.recetteKey, currentOf.dosage);
+    refreshSerieUI();
+  };
+  window.__serieDec = function(type){
+    if(serieState[type]>0){
+      serieState[type]--;
+      const stockPath = type==="orange" ? "potOrange" : type==="gris" ? "potGris" : "flacons";
+      incrementStock(stockPath, 1);
+      incrementStock("bouchons", 1);
+      incrementStock("recette/"+currentOf.recetteKey, currentOf.dosage);
+      refreshSerieUI();
+    }
+  };
+
+  function refreshSerieUI(){
+    if(currentOf.contenant==="pot"){
+      $("cntOrange").textContent = serieState.orange;
+      $("cntGris").textContent = serieState.gris;
+    } else {
+      $("cntFlacon").textContent = serieState.flacon;
+    }
+    updateSerieBanner();
+  }
+
+  function updateSerieBanner(){
+    const of = currentOf;
+    let done, target;
+    if(of.contenant==="pot"){
+      target = of.nbPots;
+      done = serieState.orange + serieState.gris;
+    } else {
+      target = of.nbPots;
+      done = serieState.flacon;
+    }
+    $("serieBanner").innerHTML = done>=target
+      ? `<div class="banner banner-ok">✓ ${done} / ${target} pièces produites — prêt pour la mise en caisse.</div>`
+      : `<div class="banner banner-warn">${done} / ${target} pièces produites.</div>`;
+    $("btnTerminerSerie").disabled = done < target;
+  }
+
+  $("btnTerminerSerie").addEventListener("click", async ()=>{
+    const of = currentOf;
+    const total = of.contenant==="pot" ? (serieState.orange+serieState.gris) : serieState.flacon;
+    const caissesUtilisees = Math.ceil(total/10);
+    await decrementStock("caisses", caissesUtilisees);
+    await db.ref("of_mlp/"+of.ofNum+"/statutProd").set("termine");
+
+    history.push({
+      ofNum: of.ofNum, recette: of.recette, contenant: of.contenant,
+      produit: of.contenant==="pot" ? {orange:serieState.orange, gris:serieState.gris} : {flacon:serieState.flacon},
+      caisses: caissesUtilisees, dosage: of.dosage
+    });
+
+    if(of.contenant === "pot"){
+      $("cardFormat").classList.remove("hidden");
+      $("cardFormat").scrollIntoView({behavior:"smooth"});
+    } else {
+      renderTracaFinale();
+      $("cardTraca").classList.remove("hidden");
+      $("cardTraca").scrollIntoView({behavior:"smooth"});
+    }
+  });
+
+  // ========== ÉTAPE 4 : CHANGEMENT DE FORMAT ==========
+  $("btnFormatFait").addEventListener("click", ()=>{
+    $("btnFormatFait").classList.add("ok");
+    $("btnContinuerFlacon").disabled = false;
+  });
+  $("btnContinuerFlacon").addEventListener("click", ()=>{
+    currentOf = null;
+    $("cardOf").classList.remove("hidden");
+    $("cardPreserie").classList.add("hidden");
+    $("cardSerie").classList.add("hidden");
+    $("cardFormat").classList.add("hidden");
+    $("selOf").value = "";
+    $("btnChargerOf").disabled = true;
+    $("ofRecap").innerHTML = '<div class="banner banner-warn">Sélectionnez maintenant l\'OF flacon.</div>';
+    $("cardOf").scrollIntoView({behavior:"smooth"});
+  });
+
+  // ========== ÉTAPE 5 : TRAÇABILITÉ ==========
+  function renderTracaFinale(){
+    let html = "";
+    history.forEach(h=>{
+      const prod = h.contenant==="pot"
+        ? `${h.produit.orange} orange + ${h.produit.gris} gris`
+        : `${h.produit.flacon} flacons`;
+      html += `<div class="recap-line"><b>${h.ofNum}</b> — ${h.recette} — ${prod} — ${h.caisses} caisse(s) — dosage ${h.dosage} g</div>`;
+    });
+    $("tracaRecap").innerHTML = html || "Aucune donnée.";
+  }
+
+  $("btnSaveTraca").addEventListener("click", async ()=>{
+    const record = {
+      session: new Date().toISOString(),
+      checklist: checklistState,
+      pression: $("pressionAir").value,
+      of: history,
+      observations: $("observationsFinales").value
+    };
+    try{
+      localStorage.setItem("traca_mlp:"+Date.now(), JSON.stringify(record));
+      await db.ref("traca_mlp/"+Date.now()).set(record);
+      alert("Fiche de traçabilité conditionnement enregistrée.");
+    }catch(e){
+      alert("Erreur d'enregistrement : "+e.message);
+    }
+  });
+})();
+</script>

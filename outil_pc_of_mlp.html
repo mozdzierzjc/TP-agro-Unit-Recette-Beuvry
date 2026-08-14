@@ -1,0 +1,241 @@
+<style>
+  :root{
+    --navy:#1B2A4A; --orange:#E87722; --orange-l:#FCE4D0;
+    --green:#1E8A4C; --green-l:#E4F5EA; --red:#C0392B; --red-l:#FBE7E4;
+    --grey:#6B7280; --grey-l:#F2F3F5; --bg:#F6F7FA; --card:#FFFFFF;
+  }
+  *{box-sizing:border-box;}
+  #app{font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);
+    color:#1a1a1a;padding:16px;max-width:960px;margin:0 auto;}
+  h1{font-size:20px;color:var(--navy);margin:0 0 2px 0;}
+  .subtitle{color:var(--orange);font-weight:700;font-size:13px;margin:0 0 16px 0;
+    border-bottom:2px solid var(--orange);padding-bottom:10px;}
+  .card{background:var(--card);border-radius:10px;padding:18px;margin-bottom:16px;
+    box-shadow:0 1px 3px rgba(0,0,0,0.08);}
+  .step-title{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--navy);
+    font-size:15px;margin-bottom:14px;}
+  .step-num{background:var(--navy);color:#fff;width:24px;height:24px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
+  label{display:block;font-size:12px;font-weight:600;color:var(--grey);margin:8px 0 4px;}
+  select,input[type=text],input[type=number]{width:100%;padding:10px;
+    border:1px solid #D8DCE3;border-radius:8px;font-size:15px;background:#fff;}
+  select:focus,input:focus{outline:2px solid var(--orange);border-color:var(--orange);}
+  .row{display:flex;gap:12px;flex-wrap:wrap;}
+  .row > div{flex:1;min-width:180px;}
+  .btn{border:none;border-radius:8px;padding:12px 20px;font-size:14px;font-weight:700;cursor:pointer;}
+  .btn-orange{background:var(--orange);color:#fff;}
+  .btn-outline{background:#fff;color:var(--navy);border:1.5px solid var(--navy);}
+  .flexend{display:flex;justify-content:flex-end;gap:10px;margin-top:14px;}
+  .banner{padding:12px 14px;border-radius:8px;font-size:14px;margin-top:14px;font-weight:600;}
+  .banner-ok{background:var(--green-l);color:var(--green);}
+  .banner-bad{background:var(--red-l);color:var(--red);}
+  .banner-warn{background:#FBF0D9;color:#B8860B;}
+  .toggle-row{display:flex;gap:10px;}
+  .toggle-btn{flex:1;padding:10px;border-radius:8px;border:1.5px solid #D8DCE3;background:#fff;
+    font-weight:700;font-size:13px;cursor:pointer;text-align:center;}
+  .toggle-btn.active{border-color:var(--orange);background:var(--orange-l);color:var(--navy);}
+  .of-item{padding:12px;border-bottom:1px solid #EEE;font-size:13px;display:flex;
+    justify-content:space-between;flex-wrap:wrap;gap:6px;align-items:center;}
+  .pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;}
+  .pill-ok{background:var(--green-l);color:var(--green);}
+  .pill-warn{background:#FBF0D9;color:#B8860B;}
+</style>
+
+<div id="app">
+  <h1>Poste PC — OF Conditionnement (MLP)</h1>
+  <div class="subtitle">TP Ligne agroalimentaire — AFPI / UIMM CIMA</div>
+
+  <div class="card">
+    <div class="step-title"><span class="step-num">1</span> Créer un OF conditionnement</div>
+
+    <div class="row">
+      <div>
+        <label>Recette (stock jus disponible)</label>
+        <select id="selRecette"></select>
+      </div>
+      <div>
+        <label>Contenant</label>
+        <select id="selContenant">
+          <option value="pot">Pot (orange + gris)</option>
+          <option value="flacon">Flacon</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Dosage cible (g)</label>
+        <input type="number" id="dosage" value="60" min="30" max="90">
+      </div>
+      <div>
+        <label>Tolérance (%)</label>
+        <input type="number" id="tolerance" value="5" min="1" max="20">
+      </div>
+      <div>
+        <label>Nombre de pots à produire (série)</label>
+        <input type="number" id="nbPots" value="20" min="1" max="60">
+      </div>
+    </div>
+
+    <label>Queue de coulée</label>
+    <div class="toggle-row">
+      <button type="button" class="toggle-btn active" id="btnQCauto">Calculée automatiquement (+2 % dosage)</button>
+      <button type="button" class="toggle-btn" id="btnQCmanuel">Saisie manuelle</button>
+    </div>
+    <div id="qcManuelRow" style="display:none;margin-top:8px;">
+      <label>Queue de coulée (g)</label>
+      <input type="number" id="qcManuel" value="1" min="0" step="0.1">
+    </div>
+
+    <div id="stockBanner"></div>
+
+    <div class="flexend">
+      <button class="btn btn-orange" id="btnValider">Valider l'OF</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="step-title"><span class="step-num">2</span> OF validés (à utiliser sur la tablette MLP)</div>
+    <div id="ofList" style="font-size:13px;">Chargement…</div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script>
+(function(){
+  const firebaseConfig = {
+    apiKey: "AIzaSyCwckomQVcJUGZLLkL9TsCFyVRjNoPYnJY",
+    authDomain: "tp-agro-cima.firebaseapp.com",
+    databaseURL: "https://tp-agro-cima-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "tp-agro-cima",
+    storageBucket: "tp-agro-cima.firebasestorage.app",
+    messagingSenderId: "621802049861",
+    appId: "1:621802049861:web:1fe29c3e2f21aadb49ee2c"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const RECETTES = {
+    R1:"R1 - Fraise", R2:"R2 - Citron", R3:"R3 - Pamplemousse",
+    R4:"R4 - Orange", R5:"R5 - Kiwi / Menthe", R6:"R6 - Fruits rouges"
+  };
+  const CONTENANT_LABELS = { pot:"Pot (orange+gris)", flacon:"Flacon" };
+
+  const $ = id => document.getElementById(id);
+
+  function initRecette(){
+    const sel = $("selRecette");
+    Object.keys(RECETTES).forEach(k=>{
+      const o = document.createElement("option");
+      o.value = k; o.textContent = RECETTES[k];
+      sel.appendChild(o);
+    });
+  }
+
+  let qcMode = "auto";
+  $("btnQCauto").addEventListener("click", ()=>{
+    qcMode = "auto";
+    $("btnQCauto").classList.add("active");
+    $("btnQCmanuel").classList.remove("active");
+    $("qcManuelRow").style.display = "none";
+  });
+  $("btnQCmanuel").addEventListener("click", ()=>{
+    qcMode = "manuel";
+    $("btnQCmanuel").classList.add("active");
+    $("btnQCauto").classList.remove("active");
+    $("qcManuelRow").style.display = "block";
+  });
+
+  async function checkStock(){
+    const recetteKey = $("selRecette").value;
+    const contenant = $("selContenant").value;
+    const dosage = parseFloat($("dosage").value);
+    const nb = parseInt($("nbPots").value, 10);
+    const banner = $("stockBanner");
+    try{
+      const snap = await db.ref("stock").once("value");
+      const stock = snap.val() || {};
+      const jusDispo = (stock.recette && stock.recette[recetteKey]) || 0;
+      const jusNecessaire = dosage * nb;
+      let contenantStock, contenantOk, contenantMsg;
+      if(contenant==="pot"){
+        const orange = stock.potOrange||0, gris = stock.potGris||0;
+        contenantStock = Math.min(orange, gris);
+        contenantOk = orange >= Math.ceil(nb/2) && gris >= Math.floor(nb/2);
+        contenantMsg = `pots (${orange} orange / ${gris} gris disponibles, ${Math.ceil(nb/2)}+${Math.floor(nb/2)} nécessaires)`;
+      } else {
+        contenantStock = stock.flacons||0;
+        contenantOk = contenantStock >= nb;
+        contenantMsg = `flacons (${contenantStock} dispo, ${nb} nécessaires)`;
+      }
+      const issues = [];
+      if(jusDispo < jusNecessaire) issues.push(`jus ${RECETTES[recetteKey]} insuffisant (${Math.round(jusDispo)} g dispo, ${jusNecessaire} g nécessaires)`);
+      if(!contenantOk) issues.push(contenantMsg + " insuffisant(s)");
+      if(issues.length){
+        banner.innerHTML = `<div class="banner banner-warn">⚠ Vérifiez le stock avant de lancer : ${issues.join(" · ")}</div>`;
+      } else {
+        banner.innerHTML = `<div class="banner banner-ok">Stock suffisant : ${Math.round(jusDispo)} g de jus, ${contenantMsg}.</div>`;
+      }
+    }catch(e){
+      banner.innerHTML = "";
+    }
+  }
+  ["selRecette","selContenant","dosage","nbPots"].forEach(id=>{
+    $(id).addEventListener("change", checkStock);
+    $(id).addEventListener("input", checkStock);
+  });
+
+  function genOfNum(recetteKey, contenant){
+    const n = Math.floor(1000+Math.random()*9000);
+    return "OF-MLP-"+recetteKey+"-"+contenant.toUpperCase().slice(0,3)+"-"+n;
+  }
+
+  $("btnValider").addEventListener("click", async ()=>{
+    const recetteKey = $("selRecette").value;
+    const contenant = $("selContenant").value;
+    const dosage = parseFloat($("dosage").value);
+    const tolerance = parseFloat($("tolerance").value);
+    const nbPots = parseInt($("nbPots").value, 10);
+    const queueCoulee = qcMode==="auto" ? Math.round(dosage*0.02*10)/10 : parseFloat($("qcManuel").value)||0;
+
+    if(!dosage || !tolerance || !nbPots){ alert("Complétez tous les champs."); return; }
+
+    const ofNum = genOfNum(recetteKey, contenant);
+    const record = {
+      ofNum, recette: RECETTES[recetteKey], recetteKey, contenant,
+      dosage, tolerance, queueCoulee, nbPots,
+      statut: "valide", statutProd: "en_attente",
+      dateValidation: new Date().toISOString()
+    };
+    try{
+      await db.ref("of_mlp/"+ofNum).set(record);
+      alert("OF validé : "+ofNum);
+      $("dosage").value = 60; $("tolerance").value = 5; $("nbPots").value = 20;
+    }catch(e){
+      alert("Erreur : "+e.message);
+    }
+  });
+
+  function renderOfList(items){
+    if(!items.length){ $("ofList").innerHTML = "Aucun OF validé pour l'instant."; return; }
+    items.sort((a,b)=> new Date(b.dateValidation)-new Date(a.dateValidation));
+    let html = "";
+    items.forEach(rec=>{
+      html += `<div class="of-item">
+        <span><b>${rec.ofNum}</b> — ${rec.recette} — ${CONTENANT_LABELS[rec.contenant]||rec.contenant} — ${rec.dosage} g ±${rec.tolerance}% — ${rec.nbPots} pièces</span>
+        <span class="pill ${rec.statutProd==='termine'?'pill-ok':'pill-warn'}">${rec.statutProd==='termine'?'Terminé':'En attente / en cours'}</span>
+      </div>`;
+    });
+    $("ofList").innerHTML = html;
+  }
+
+  db.ref("of_mlp").on("value", snap=>{
+    const val = snap.val() || {};
+    renderOfList(Object.values(val));
+  });
+
+  initRecette();
+  checkStock();
+})();
+</script>

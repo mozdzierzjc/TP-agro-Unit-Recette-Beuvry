@@ -1,0 +1,163 @@
+<style>
+  :root{ --navy:#1B2A4A; --orange:#E87722; --orange-l:#FCE4D0; --teal:#1E9E8E;
+    --green:#1E8A4C; --red:#C0392B; --grey:#6B7280; --bg:#F1F3F6; }
+  *{box-sizing:border-box;}
+  #app{font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);
+    min-height:100vh;padding:0;margin:0;}
+  .topbar{background:var(--navy);color:#fff;text-align:center;padding:18px;
+    font-size:24px;font-weight:800;letter-spacing:1px;}
+  .teal-bar{height:8px;background:var(--teal);}
+  .section-title{background:#E7EAF0;color:var(--navy);text-align:center;font-weight:700;
+    font-size:15px;padding:10px;letter-spacing:0.5px;}
+  .stock-wrap{display:flex;flex-wrap:wrap;gap:20px;padding:24px;}
+  .stock-table{flex:2;min-width:340px;background:#fff;border-radius:10px;padding:18px;
+    box-shadow:0 1px 4px rgba(0,0,0,0.08);}
+  .stock-row{display:flex;justify-content:space-between;align-items:center;
+    padding:12px 4px;border-bottom:1px solid #EEE;font-size:18px;font-weight:600;color:#222;}
+  .stock-row:last-child{border-bottom:none;}
+  .stock-val{font-weight:800;font-size:20px;min-width:110px;text-align:right;}
+  .stock-val.low{color:var(--red);}
+  .stock-val.ok{color:var(--green);}
+  .reapro-panel{flex:1;min-width:260px;background:#fff;border-radius:10px;padding:18px;
+    box-shadow:0 1px 4px rgba(0,0,0,0.08);}
+  .reapro-btn{display:block;width:100%;margin-bottom:12px;padding:16px;border:none;
+    border-radius:8px;background:var(--orange);color:#fff;font-weight:700;font-size:15px;
+    cursor:pointer;}
+  .reapro-btn:active{opacity:0.8;}
+  .status{font-size:12px;color:var(--grey);text-align:center;padding:6px;}
+  .status.connected{color:var(--green);}
+  .status.error{color:var(--red);}
+  .lowbanner{background:#FBE7E4;color:var(--red);padding:10px 18px;font-weight:700;
+    font-size:14px;text-align:center;}
+</style>
+
+<div id="app">
+  <div class="topbar">SUPERVISION DE L'ATELIER — TP AGROALIMENTAIRE CIMA</div>
+  <div class="teal-bar"></div>
+  <div id="lowBanner"></div>
+  <div class="section-title">STOCK MATIÈRES PREMIÈRES (unité de recette)</div>
+
+  <div class="stock-wrap">
+    <div class="stock-table" id="stockTable"></div>
+
+    <div class="reapro-panel">
+      <div style="font-weight:700;color:var(--navy);margin-bottom:12px;">Réapprovisionner</div>
+      <button class="reapro-btn" data-mat="baseA">REAPRO BASE A (rouge)</button>
+      <button class="reapro-btn" data-mat="baseB">REAPRO BASE B (jaune)</button>
+      <button class="reapro-btn" data-mat="baseC">REAPRO BASE C (bleue)</button>
+      <button class="reapro-btn" data-mat="poudre">REAPRO POUDRE</button>
+      <div class="status" id="connStatus">Connexion…</div>
+    </div>
+  </div>
+
+  <div class="section-title">STOCK CONDITIONNEMENT (MLP)</div>
+  <div class="stock-wrap">
+    <div class="stock-table" id="stockTableCond"></div>
+
+    <div class="reapro-panel">
+      <div style="font-weight:700;color:var(--navy);margin-bottom:12px;">Réapprovisionner</div>
+      <button class="reapro-btn" data-mat="potOrange">REAPRO POTS ORANGE</button>
+      <button class="reapro-btn" data-mat="potGris">REAPRO POTS GRIS</button>
+      <button class="reapro-btn" data-mat="bouchons">REAPRO BOUCHONS</button>
+      <button class="reapro-btn" data-mat="flacons">REAPRO FLACONS</button>
+      <button class="reapro-btn" data-mat="caisses">REAPRO CAISSES VIDES</button>
+    </div>
+  </div>
+
+  <div class="section-title">STOCK RECETTE PRODUITE (jus, alimenté automatiquement par l'unité de recette)</div>
+  <div class="stock-wrap">
+    <div class="stock-table" id="stockTableRecette" style="flex:1;"></div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script>
+(function(){
+  const firebaseConfig = {
+    apiKey: "AIzaSyCwckomQVcJUGZLLkL9TsCFyVRjNoPYnJY",
+    authDomain: "tp-agro-cima.firebaseapp.com",
+    databaseURL: "https://tp-agro-cima-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "tp-agro-cima",
+    storageBucket: "tp-agro-cima.firebasestorage.app",
+    messagingSenderId: "621802049861",
+    appId: "1:621802049861:web:1fe29c3e2f21aadb49ee2c"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const MATERIALS = [
+    { key:"baseA",  label:"Stock Base A (rouge)",   unit:"L", full:20,   low:5   },
+    { key:"baseB",  label:"Stock Base B (jaune)",    unit:"L", full:20,   low:5   },
+    { key:"baseC",  label:"Stock Base C (bleue)",    unit:"L", full:20,   low:5   },
+    { key:"poudre", label:"Stock Poudre (bicarbonate)", unit:"g", full:5000, low:1000 },
+  ];
+
+  const CONDITIONNEMENT = [
+    { key:"potOrange", label:"Pots orange",       unit:"pots",   full:15, low:3 },
+    { key:"potGris",   label:"Pots gris",         unit:"pots",   full:15, low:3 },
+    { key:"bouchons",  label:"Bouchons",          unit:"pièces", full:60, low:10 },
+    { key:"flacons",   label:"Flacons",           unit:"pièces", full:10, low:2 },
+    { key:"caisses",   label:"Caisses vides",     unit:"caisses",full:5,  low:1 },
+  ];
+
+  const RECETTES_LABELS = {
+    R1:"R1 - Fraise", R2:"R2 - Citron", R3:"R3 - Pamplemousse",
+    R4:"R4 - Orange", R5:"R5 - Kiwi / Menthe", R6:"R6 - Fruits rouges"
+  };
+
+  const $ = id => document.getElementById(id);
+
+  function renderGenericTable(targetId, defs, values){
+    let html = "";
+    let lowList = [];
+    defs.forEach(m=>{
+      const v = values[m.key];
+      const val = (v===undefined || v===null) ? m.full : v;
+      const isLow = val <= m.low;
+      if(isLow) lowList.push(m.label);
+      html += `<div class="stock-row"><span>${m.label}</span>
+        <span class="stock-val ${isLow?'low':'ok'}">${val} ${m.unit}</span></div>`;
+    });
+    $(targetId).innerHTML = html;
+    return lowList;
+  }
+
+  function renderRecetteTable(values){
+    let html = "";
+    Object.keys(RECETTES_LABELS).forEach(k=>{
+      const v = values[k];
+      const val = (v===undefined || v===null) ? 0 : Math.round(v);
+      html += `<div class="stock-row"><span>${RECETTES_LABELS[k]}</span>
+        <span class="stock-val ${val<=0?'low':'ok'}">${val} g</span></div>`;
+    });
+    $("stockTableRecette").innerHTML = html;
+  }
+
+  const stockRef = db.ref("stock");
+  stockRef.on("value", snap=>{
+    const values = snap.val() || {};
+    const low1 = renderGenericTable("stockTable", MATERIALS, values);
+    const low2 = renderGenericTable("stockTableCond", CONDITIONNEMENT, values);
+    renderRecetteTable(values.recette || {});
+    const lowList = low1.concat(low2);
+    $("lowBanner").innerHTML = lowList.length
+      ? `<div class="lowbanner">⚠ Stock bas : ${lowList.join(", ")} — réapprovisionner avant de démarrer</div>`
+      : "";
+    $("connStatus").textContent = "Connecté — mise à jour en direct";
+    $("connStatus").className = "status connected";
+  }, err=>{
+    $("connStatus").textContent = "Connexion impossible : " + err.message;
+    $("connStatus").className = "status error";
+  });
+
+  document.querySelectorAll(".reapro-btn").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const mat = btn.getAttribute("data-mat");
+      const def = MATERIALS.find(m=>m.key===mat) || CONDITIONNEMENT.find(m=>m.key===mat);
+      if(!confirm("Réapprovisionner "+def.label+" à "+def.full+" "+def.unit+" ?")) return;
+      db.ref("stock/"+mat).set(def.full);
+    });
+  });
+})();
+</script>
