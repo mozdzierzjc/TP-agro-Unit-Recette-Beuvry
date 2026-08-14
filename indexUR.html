@@ -10338,11 +10338,13 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     fbDb = firebase.database();
   }catch(e){ console.warn("Firebase indisponible :", e); }
 
+  const FULL_STOCK = { baseA:20, baseB:20, baseC:20, poudre:5000 };
+
   async function decrementerStock(materialKey, qty){
     if(!fbDb || !qty || qty<=0) return;
     try{
       await fbDb.ref("stock/"+materialKey).transaction(current=>{
-        const base = (current===null || current===undefined) ? 0 : current;
+        const base = (current===null || current===undefined) ? (FULL_STOCK[materialKey]||0) : current;
         return Math.max(0, base - qty);
       });
     }catch(e){ console.warn("Décrément stock échoué :", e); }
