@@ -1,0 +1,612 @@
+<style>
+  :root{
+    --navy:#1B2A4A; --navy2:#233559; --orange:#E87722; --orange-l:#FCE4D0;
+    --green:#1E8A4C; --green-l:#E4F5EA; --red:#C0392B; --red-l:#FBE7E4;
+    --amber:#B8860B; --amber-l:#FBF0D9; --grey:#6B7280; --grey-l:#F2F3F5;
+    --bg:#F6F7FA; --card:#FFFFFF;
+  }
+  *{box-sizing:border-box;}
+  #app{font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);
+    color:#1a1a1a;padding:14px;max-width:900px;margin:0 auto;}
+  h1{font-size:20px;color:var(--navy);margin:0 0 2px 0;}
+  .subtitle{color:var(--orange);font-weight:700;font-size:13px;margin:0 0 14px 0;
+    border-bottom:2px solid var(--orange);padding-bottom:10px;}
+  .card{background:var(--card);border-radius:10px;padding:16px;margin-bottom:14px;
+    box-shadow:0 1px 3px rgba(0,0,0,0.08);}
+  .step-title{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--navy);
+    font-size:15px;margin-bottom:12px;}
+  .step-num{background:var(--navy);color:#fff;width:24px;height:24px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
+  label{display:block;font-size:12px;font-weight:600;color:var(--grey);margin:8px 0 4px;}
+  select,input[type=text],input[type=number]{width:100%;padding:10px;border:1px solid #D8DCE3;
+    border-radius:8px;font-size:15px;background:#fff;}
+  select:focus,input:focus{outline:2px solid var(--orange);border-color:var(--orange);}
+  .row{display:flex;gap:10px;flex-wrap:wrap;}
+  .row > div{flex:1;min-width:120px;}
+  .btn{border:none;border-radius:8px;padding:11px 16px;font-size:14px;font-weight:700;
+    cursor:pointer;}
+  .btn-orange{background:var(--orange);color:#fff;}
+  .btn-navy{background:var(--navy);color:#fff;}
+  .btn-outline{background:#fff;color:var(--navy);border:1.5px solid var(--navy);}
+  .btn-outline:hover, .btn-orange:hover, .btn-navy:hover{opacity:0.9;}
+  .btn:disabled{opacity:0.4;cursor:not-allowed;}
+  .pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;}
+  .pill-ok{background:var(--green-l);color:var(--green);}
+  .pill-warn{background:var(--amber-l);color:var(--amber);}
+  .pill-bad{background:var(--red-l);color:var(--red);}
+  .lot-card{border:1.5px solid #E2E5EA;border-radius:8px;padding:10px 12px;margin-bottom:8px;
+    display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+  .lot-card.selected{border-color:var(--orange);background:var(--orange-l);}
+  .lot-card.error{border-color:var(--red);background:var(--red-l);}
+  .lot-info b{font-size:14px;}
+  .lot-info div{font-size:12px;color:var(--grey);margin-top:2px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{background:var(--navy);color:#fff;padding:8px;text-align:center;font-size:12px;}
+  td{padding:8px;text-align:center;border-bottom:1px solid #EEE;}
+  .banner{padding:10px 12px;border-radius:8px;font-size:13px;margin-top:10px;font-weight:600;}
+  .banner-ok{background:var(--green-l);color:var(--green);}
+  .banner-warn{background:var(--amber-l);color:var(--amber);}
+  .banner-bad{background:var(--red-l);color:var(--red);}
+  .hidden{display:none !important;}
+  .qr-modal{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:50;
+    display:flex;align-items:center;justify-content:center;padding:20px;}
+  .qr-box{background:#fff;border-radius:12px;padding:16px;max-width:420px;width:100%;}
+  video{width:100%;border-radius:8px;background:#000;}
+  .small{font-size:12px;color:var(--grey);}
+  .flexend{display:flex;justify-content:flex-end;gap:10px;margin-top:12px;}
+  .history-item{padding:10px;border-bottom:1px solid #EEE;font-size:13px;display:flex;
+    justify-content:space-between;cursor:pointer;}
+  .history-item:hover{background:var(--grey-l);}
+  textarea{width:100%;padding:10px;border:1px solid #D8DCE3;border-radius:8px;font-size:14px;
+    font-family:inherit;min-height:60px;}
+</style>
+
+<div id="app">
+  <h1>Poste Unité Recette – Outil de production</h1>
+  <div class="subtitle">OF · Contrôle qualité · Traçabilité — AFPI / UIMM CIMA</div>
+
+  <div class="card">
+    <div class="step-title"><span class="step-num">1</span> Ordre de fabrication</div>
+    <div class="row">
+      <div>
+        <label>Recette</label>
+        <select id="selRecette"></select>
+      </div>
+      <div>
+        <label>N° OF</label>
+        <input type="text" id="ofNum" readonly>
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label>Opérateur (stagiaire)</label>
+        <input type="text" id="operateur" placeholder="Nom Prénom">
+      </div>
+      <div>
+        <label>Volume total (L)</label>
+        <input type="text" id="volTotal" readonly>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Version de la fiche</label>
+        <select id="selMode">
+          <option value="sans">Sans calcul — dosage fourni</option>
+          <option value="avec">Avec calcul — à calculer</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="dosageTable" style="margin-top:12px;"></div>
+    <p class="small" style="margin-top:10px;">La programmation de l'unité de recette (réglages + séquence IHM) est réalisée sur machine à partir de la fiche papier correspondant à cette recette.</p>
+  </div>
+
+  <div class="card">
+    <div class="step-title"><span class="step-num">2</span> Sélection des lots matières premières (FIFO)</div>
+    <p class="small">Sélectionnez un lot pour chaque matière utilisée. Le lot le plus ancien encore valide est recommandé (règle FIFO). Un lot périmé ne peut pas être validé.</p>
+    <div id="lotsZone"></div>
+  </div>
+
+  <div class="card">
+    <div class="step-title"><span class="step-num">3</span> Fiche de contrôle qualité</div>
+    <div style="font-weight:700;color:var(--navy);font-size:13px;margin-bottom:6px;">Contrôle colorimétrique</div>
+    <div class="row">
+      <div>
+        <label>Teinte conforme à la référence ?</label>
+        <select id="qColor">
+          <option value="">— sélectionner —</option>
+          <option value="ok">Oui</option>
+          <option value="ecart_leger">Non — écart léger</option>
+          <option value="ecart_fort">Non — écart important</option>
+        </select>
+      </div>
+      <div>
+        <label>Aspect / homogénéité conforme ?</label>
+        <select id="qAspect">
+          <option value="">— sélectionner —</option>
+          <option value="ok">Oui</option>
+          <option value="non">Non</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="font-weight:700;color:var(--navy);font-size:13px;margin:14px 0 6px;">Contrôle physico-chimique</div>
+    <div class="row">
+      <div>
+        <label>Densité mesurée (g/mL) — cible 1,02 ± 0,01</label>
+        <input type="number" step="0.001" id="qDensite" placeholder="ex : 1.02">
+      </div>
+      <div>
+        <label>Extrait sec mesuré (%) — cible 2,0 ± 0,3</label>
+        <input type="number" step="0.01" id="qExtrait" placeholder="ex : 2.0">
+      </div>
+      <div>
+        <label>pH mesuré — cible 8,0 – 8,4</label>
+        <input type="number" step="0.01" id="qPh" placeholder="ex : 8.2">
+      </div>
+    </div>
+    <div id="qBanner"></div>
+  </div>
+
+  <div class="card">
+    <div class="step-title"><span class="step-num">4</span> Fiche de traçabilité</div>
+    <div id="tracaSummary" class="small"></div>
+    <label>Observations / actions correctives</label>
+    <textarea id="observations" placeholder="Facultatif"></textarea>
+    <div id="decisionBanner"></div>
+    <div class="flexend">
+      <button class="btn btn-outline" id="btnHistory">Historique OF</button>
+      <button class="btn btn-orange" id="btnSave">Enregistrer la fiche de traçabilité</button>
+    </div>
+  </div>
+
+  <div class="card" id="historyCard" style="display:none;">
+    <div class="step-title"><span class="step-num">↺</span> OF enregistrés sur cette tablette</div>
+    <div id="historyList" class="small"></div>
+  </div>
+</div>
+
+<div id="qrModal" class="qr-modal hidden">
+  <div class="qr-box">
+    <div style="font-weight:700;color:var(--navy);margin-bottom:8px;">Scanner le QR code du lot</div>
+    <video id="qrVideo" playsinline autoplay muted></video>
+    <div id="qrStatus" class="small" style="margin-top:8px;">Initialisation caméra…</div>
+    <div class="flexend">
+      <button class="btn btn-outline" id="qrClose">Fermer / saisir manuellement</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.js"></script>
+<script>
+(function(){
+  const RECETTES = {
+    R1: { nom:"R1 - Fraise",        vol:25, A:100, B:0,   C:0,  hex:"#E61E1E" },
+    R2: { nom:"R2 - Citron",        vol:30, A:0,   B:100, C:0,  hex:"#FAC828" },
+    R3: { nom:"R3 - Pamplemousse",  vol:28, A:70,  B:30,  C:0,  hex:"#EC5121" },
+    R4: { nom:"R4 - Orange",        vol:32, A:50,  B:50,  C:0,  hex:"#F07323" },
+    R5: { nom:"R5 - Kiwi / Menthe", vol:35, A:0,   B:60,  C:40, hex:"#A6A068" },
+    R6: { nom:"R6 - Fruits rouges", vol:30, A:40,  B:20,  C:40, hex:"#9E5C64" },
+  };
+
+  // Stock de lots matières premières (simulation, date du jour : 2026-08-14)
+  const STOCK = [
+    { code:"BA-231001", matiere:"A", nom:"Base A (rouge)",   peremption:"2026-07-01" },
+    { code:"BA-240612", matiere:"A", nom:"Base A (rouge)",   peremption:"2026-09-01" },
+    { code:"BA-240715", matiere:"A", nom:"Base A (rouge)",   peremption:"2026-11-15" },
+    { code:"BB-240605", matiere:"B", nom:"Base B (jaune)",   peremption:"2026-08-20" },
+    { code:"BB-240801", matiere:"B", nom:"Base B (jaune)",   peremption:"2026-12-01" },
+    { code:"BC-240701", matiere:"C", nom:"Base C (bleue)",   peremption:"2026-10-10" },
+    { code:"BC-240720", matiere:"C", nom:"Base C (bleue)",   peremption:"2027-01-05" },
+    { code:"PD-240610", matiere:"P", nom:"Poudre (bicarbonate)", peremption:"2027-06-01" },
+    { code:"PD-240820", matiere:"P", nom:"Poudre (bicarbonate)", peremption:"2028-01-01" },
+  ];
+  const TODAY = new Date("2026-08-14");
+
+  let currentSelection = {}; // matiere -> lot code
+  let currentQrTarget = null;
+
+  // Stockage : window.storage (Claude.ai) si disponible, sinon repli localStorage (hébergement externe type GitHub Pages)
+  const hasClaudeStorage = typeof window.storage !== "undefined" && window.storage;
+  const localDB = {
+    async set(key, value){ localStorage.setItem(key, value); return {key, value}; },
+    async get(key){ const v = localStorage.getItem(key); if(v===null) throw new Error("not found"); return {key, value:v}; },
+    async delete(key){ localStorage.removeItem(key); return {key, deleted:true}; },
+    async list(prefix){ const keys=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k && k.startsWith(prefix)) keys.push(k);} return {keys}; }
+  };
+  const store = hasClaudeStorage ? window.storage : localDB;
+
+  const $ = id => document.getElementById(id);
+
+  function round1(n){ return Math.round(n*10)/10; }
+
+  function computeDosage(r){
+    const baseTotal = r.vol*0.10;
+    return {
+      A: round1(baseTotal*(r.A/100)),
+      B: round1(baseTotal*(r.B/100)),
+      C: round1(baseTotal*(r.C/100)),
+      poudre: Math.round(r.vol*20),
+      eau: round1(r.vol - baseTotal)
+    };
+  }
+
+  function genOfNum(code){
+    const n = Math.floor(1000+Math.random()*9000);
+    return "OF-"+code+"-"+n;
+  }
+
+  function initRecetteSelect(){
+    const sel = $("selRecette");
+    Object.keys(RECETTES).forEach(k=>{
+      const o=document.createElement("option");
+      o.value=k; o.textContent=RECETTES[k].nom;
+      sel.appendChild(o);
+    });
+    sel.addEventListener("change", onRecetteChange);
+    $("selMode").addEventListener("change", ()=>{
+      renderDosageTable(RECETTES[$("selRecette").value]);
+      updateTraca();
+    });
+    sel.value="R1";
+    onRecetteChange();
+  }
+
+  function onRecetteChange(){
+    const key = $("selRecette").value;
+    const r = RECETTES[key];
+    $("ofNum").value = genOfNum(key);
+    $("volTotal").value = r.vol + " L";
+    renderDosageTable(r);
+    renderLots(r);
+    updateTraca();
+  }
+
+  function renderDosageTable(r){
+    const d = computeDosage(r);
+    const mode = $("selMode").value;
+    const materials = [
+      {label:"Base A (L)", cible:d.A, pct:r.A, id:"mA", show:r.A>0},
+      {label:"Base B (L)", cible:d.B, pct:r.B, id:"mB", show:r.B>0},
+      {label:"Base C (L)", cible:d.C, pct:r.C, id:"mC", show:r.C>0},
+      {label:"Poudre (g)", cible:d.poudre, pct:null, id:"mP", show:true},
+      {label:"Eau qsp (L)", cible:d.eau, pct:null, id:"mE", show:true},
+    ];
+
+    if(mode==="sans"){
+      let html = '<table><tr><th>Composant</th><th>Cible</th><th>Mesuré</th><th>Écart</th></tr>';
+      materials.forEach(m=>{
+        if(!m.show) return;
+        html += `<tr><td>${m.label}</td><td>${m.cible}</td>
+          <td><input type="number" step="0.1" style="width:80px;text-align:center;padding:4px;border:1px solid #ccc;border-radius:6px;" id="${m.id}" data-cible="${m.cible}" onchange="window.__ofUpdateEcart('${m.id}')"></td>
+          <td id="${m.id}_ecart">—</td></tr>`;
+      });
+      html += '</table>';
+      $("dosageTable").innerHTML = html;
+    } else {
+      let html = '<p class="small">Base color\u00e9e = 10 % du volume total \u00b7 Poudre = 20 g/L \u00b7 Eau = compl\u00e9ment. Volume total : <b>'+r.vol+' L</b>.</p>';
+      html += '<table><tr><th>Composant</th><th>% recette</th><th>Calcul\u00e9 (\u00e0 vous)</th><th>Mesur\u00e9</th></tr>';
+      materials.forEach(m=>{
+        if(!m.show) return;
+        const pctLabel = m.pct!==null ? m.pct+" %" : (m.id==="mP" ? "20 g/L" : "qsp");
+        html += `<tr><td>${m.label}</td><td>${pctLabel}</td>
+          <td><input type="number" step="0.1" style="width:80px;text-align:center;padding:4px;border:1px solid #ccc;border-radius:6px;" id="${m.id}_calc" data-cible="${m.cible}" onchange="window.__ofUpdateCalc('${m.id}')"></td>
+          <td><input type="number" step="0.1" style="width:80px;text-align:center;padding:4px;border:1px solid #ccc;border-radius:6px;" id="${m.id}" data-cible="${m.cible}" onchange="window.__ofUpdateEcart('${m.id}')"></td></tr>
+          <tr><td colspan="4" style="text-align:left;padding:2px 8px;" id="${m.id}_calcstatus"></td></tr>`;
+      });
+      html += '</table>';
+      $("dosageTable").innerHTML = html;
+    }
+  }
+
+  window.__ofUpdateCalc = function(id){
+    const el = $(id+"_calc");
+    const cible = parseFloat(el.getAttribute("data-cible"));
+    const val = parseFloat(el.value);
+    const status = $(id+"_calcstatus");
+    if(isNaN(val)){ status.innerHTML=""; return; }
+    const ecartPct = cible>0 ? Math.abs((val-cible)/cible*100) : (val===0?0:100);
+    status.innerHTML = ecartPct<=2
+      ? '<span class="pill pill-ok">Calcul correct</span>'
+      : '<span class="pill pill-bad">Calcul \u00e0 revoir</span>';
+    updateTraca();
+  };
+
+  window.__ofUpdateEcart = function(id){
+    const el = $(id);
+    const cible = parseFloat(el.getAttribute("data-cible"));
+    const mesure = parseFloat(el.value);
+    const cell = $(id+"_ecart");
+    if(isNaN(mesure)){ if(cell) cell.innerHTML="—"; updateTraca(); return; }
+    const ecartPct = cible>0 ? Math.abs((mesure-cible)/cible*100) : (mesure===0?0:100);
+    if(cell){
+      if(ecartPct<=5){
+        cell.innerHTML = '<span class="pill pill-ok">±'+ecartPct.toFixed(1)+'%</span>';
+      } else {
+        cell.innerHTML = '<span class="pill pill-bad">±'+ecartPct.toFixed(1)+'%</span>';
+      }
+    }
+    updateTraca();
+  };
+
+  function daysUntil(dateStr){
+    const d = new Date(dateStr);
+    return Math.round((d-TODAY)/(1000*60*60*24));
+  }
+
+  function lotsForMaterial(code){
+    return STOCK.filter(l=>l.matiere===code)
+      .slice()
+      .sort((a,b)=> new Date(a.peremption)-new Date(b.peremption));
+  }
+
+  function renderLots(r){
+    currentSelection = {};
+    currentSelectionErrors = {};
+    const needed = [];
+    if(r.A>0) needed.push("A");
+    if(r.B>0) needed.push("B");
+    if(r.C>0) needed.push("C");
+    needed.push("P");
+
+    let html = "";
+    needed.forEach(code=>{
+      const lots = lotsForMaterial(code);
+      const oldestValid = lots.find(l=>daysUntil(l.peremption)>=0);
+      html += `<div style="margin-bottom:10px;"><div style="font-weight:700;font-size:13px;margin-bottom:6px;">
+        ${lots[0].nom}
+        <button class="btn btn-outline" style="padding:5px 10px;font-size:12px;margin-left:8px;" onclick="window.__openQr('${code}')">📷 Scanner</button>
+        </div>
+        <div id="lotlist_${code}"></div></div>`;
+    });
+    $("lotsZone").innerHTML = html;
+
+    needed.forEach(code=>{
+      const lots = lotsForMaterial(code);
+      const oldestValid = lots.find(l=>daysUntil(l.peremption)>=0);
+      const zone = $("lotlist_"+code);
+      lots.forEach(l=>{
+        const div = document.createElement("div");
+        div.className = "lot-card";
+        div.id = "lotcard_"+l.code;
+        div.innerHTML = `<div class="lot-info"><b>${l.code}</b><div>Péremption : ${l.peremption}</div></div>
+          <button class="btn btn-navy" style="padding:7px 12px;font-size:12px;" onclick="window.__selectLot('${code}','${l.code}')">Sélectionner</button>`;
+        zone.appendChild(div);
+      });
+    });
+  }
+
+  let currentSelectionErrors = {}; // materialCode -> error message
+
+  window.__selectLot = function(materialCode, lotCode){
+    const lots = lotsForMaterial(materialCode);
+    const oldestValid = lots.find(l=>daysUntil(l.peremption)>=0);
+    const chosen = lots.find(l=>l.code===lotCode);
+    const jrs = daysUntil(chosen.peremption);
+
+    currentSelection[materialCode] = lotCode;
+    delete currentSelectionErrors[materialCode];
+
+    document.querySelectorAll('#lotlist_'+materialCode+' .lot-card').forEach(c=>{
+      c.classList.remove('selected'); c.classList.remove('error');
+    });
+    const card = $("lotcard_"+lotCode);
+
+    clearMaterialBanner(materialCode);
+
+    if(jrs<0){
+      card.classList.add('error');
+      currentSelectionErrors[materialCode] = "Lot périmé sélectionné (dépassé depuis "+Math.abs(jrs)+" j) — vérifiez la date de péremption avant validation.";
+      showMaterialBanner(materialCode, "banner-bad", "❌ ERREUR : ce lot est périmé depuis "+Math.abs(jrs)+" jour(s). Contrôlez la date et choisissez un lot valide.");
+    } else {
+      card.classList.add('selected');
+      if(oldestValid && oldestValid.code!==lotCode){
+        showMaterialBanner(materialCode, "banner-warn", "⚠ Règle FIFO non respectée : le lot "+oldestValid.code+" est plus ancien et disponible. Lot choisi : "+lotCode+".");
+      }
+    }
+    updateTraca();
+  };
+
+  function showMaterialBanner(materialCode, cls, text){
+    let banner = document.createElement("div");
+    banner.className = "banner "+cls;
+    banner.textContent = text;
+    const zone = $("lotlist_"+materialCode);
+    zone.parentElement.appendChild(banner);
+  }
+  function clearMaterialBanner(materialCode){
+    const zone = $("lotlist_"+materialCode);
+    const old = zone.parentElement.querySelectorAll(".banner");
+    old.forEach(b=>b.remove());
+  }
+
+  // --- QR scan (caméra avec repli manuel) ---
+  let qrStream = null;
+  window.__openQr = function(materialCode){
+    currentQrTarget = materialCode;
+    $("qrModal").classList.remove("hidden");
+    $("qrStatus").textContent = "Initialisation caméra…";
+    startCamera();
+  };
+
+  function startCamera(){
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      $("qrStatus").textContent = "Caméra non disponible sur cet appareil/navigateur. Utilisez la sélection manuelle ci-dessous (fermer cette fenêtre).";
+      return;
+    }
+    navigator.mediaDevices.getUserMedia({ video:{ facingMode:"environment" } })
+      .then(stream=>{
+        qrStream = stream;
+        const video = $("qrVideo");
+        video.srcObject = stream;
+        $("qrStatus").textContent = "Visez le QR code du lot…";
+        requestAnimationFrame(scanLoop);
+      })
+      .catch(()=>{
+        $("qrStatus").textContent = "Accès caméra refusé ou indisponible dans cet environnement. Utilisez la sélection manuelle ci-dessous (fermer cette fenêtre).";
+      });
+  }
+
+  function scanLoop(){
+    if(!qrStream) return;
+    const video = $("qrVideo");
+    if(video.readyState===video.HAVE_ENOUGH_DATA && window.jsQR){
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video,0,0,canvas.width,canvas.height);
+      const imgData = ctx.getImageData(0,0,canvas.width,canvas.height);
+      const code = jsQR(imgData.data, canvas.width, canvas.height);
+      if(code){
+        handleQrResult(code.data);
+        return;
+      }
+    }
+    requestAnimationFrame(scanLoop);
+  }
+
+  function handleQrResult(data){
+    let lotCode = data.trim();
+    try{ const parsed = JSON.parse(data); if(parsed.lot) lotCode = parsed.lot; }catch(e){}
+    const lot = STOCK.find(l=>l.code===lotCode);
+    closeQr();
+    if(!lot){
+      alert("QR non reconnu dans le stock : "+lotCode);
+      return;
+    }
+    if(lot.matiere!==currentQrTarget){
+      alert("Ce lot ("+lot.nom+") ne correspond pas à la matière attendue.");
+      return;
+    }
+    window.__selectLot(lot.matiere, lot.code);
+  }
+
+  function closeQr(){
+    if(qrStream){ qrStream.getTracks().forEach(t=>t.stop()); qrStream=null; }
+    $("qrModal").classList.add("hidden");
+  }
+  $("qrClose").addEventListener("click", closeQr);
+
+  // --- Qualité + traçabilité ---
+  function evalQuality(){
+    const density = parseFloat($("qDensite").value);
+    const extrait = parseFloat($("qExtrait").value);
+    const ph = parseFloat($("qPh").value);
+    const color = $("qColor").value;
+    const aspect = $("qAspect").value;
+
+    const densOk = !isNaN(density) && Math.abs(density-1.02)<=0.01;
+    const extraitOk = !isNaN(extrait) && Math.abs(extrait-2.0)<=0.3;
+    const phOk = !isNaN(ph) && ph>=8.0 && ph<=8.4;
+    const colorOk = color==="ok";
+    const aspectOk = aspect==="ok";
+
+    let banner = $("qBanner");
+    let issues = [];
+    if($("qDensite").value!=="" && !densOk) issues.push("densité hors cible");
+    if($("qExtrait").value!=="" && !extraitOk) issues.push("extrait sec hors cible");
+    if($("qPh").value!=="" && !phOk) issues.push("pH hors cible");
+    if(color && !colorOk) issues.push("teinte non conforme");
+    if(aspect && !aspectOk) issues.push("aspect non conforme");
+
+    if(issues.length===0 && color && aspect && $("qDensite").value && $("qExtrait").value && $("qPh").value){
+      banner.innerHTML = '<div class="banner banner-ok">Tous les contrôles renseignés sont conformes.</div>';
+    } else if(issues.length>0){
+      banner.innerHTML = '<div class="banner banner-bad">Non conforme : '+issues.join(", ")+'.</div>';
+    } else {
+      banner.innerHTML = '';
+    }
+    return { density, extrait, ph, color, aspect, densOk, extraitOk, phOk, colorOk, aspectOk,
+      allFilled: color && aspect && $("qDensite").value!=="" && $("qExtrait").value!=="" && $("qPh").value!=="",
+      conforme: issues.length===0 };
+  }
+
+  function updateTraca(){
+    const key = $("selRecette").value;
+    const r = RECETTES[key];
+    const q = evalQuality();
+    let lotsHtml = "Lots sélectionnés : ";
+    const entries = Object.entries(currentSelection);
+    lotsHtml += entries.length ? entries.map(([m,c])=>c).join(", ") : "aucun";
+
+    $("tracaSummary").innerHTML =
+      `<b>OF :</b> ${$("ofNum").value} — <b>Recette :</b> ${r.nom} — <b>Volume :</b> ${r.vol} L<br>
+       <b>Opérateur :</b> ${$("operateur").value||"—"}<br>
+       ${lotsHtml}`;
+
+    const needed = [];
+    if(r.A>0) needed.push("A"); if(r.B>0) needed.push("B"); if(r.C>0) needed.push("C"); needed.push("P");
+    const allLotsSelected = needed.every(m=>currentSelection[m]);
+    const hasLotError = Object.keys(currentSelectionErrors).length>0;
+
+    let banner = $("decisionBanner");
+    if(!allLotsSelected){
+      banner.innerHTML = '<div class="banner banner-warn">Sélectionnez un lot pour chaque matière avant de clôturer la fiche.</div>';
+    } else if(hasLotError){
+      banner.innerHTML = '<div class="banner banner-bad">✗ Non conforme — lot(s) périmé(s) sélectionné(s) : '+Object.keys(currentSelectionErrors).join(", ")+'. Corrigez avant d\'enregistrer.</div>';
+    } else if(!q.allFilled){
+      banner.innerHTML = '<div class="banner banner-warn">Complétez la fiche qualité (étape 3) avant d\'enregistrer.</div>';
+    } else if(q.conforme){
+      banner.innerHTML = '<div class="banner banner-ok">✓ Dossier conforme — prêt à être enregistré et transmis pour clôture PC.</div>';
+    } else {
+      banner.innerHTML = '<div class="banner banner-bad">✗ Non conforme — corriger ou signaler au formateur avant transfert vers le remplissage.</div>';
+    }
+  }
+
+  ["qColor","qAspect","qDensite","qExtrait","qPh","operateur"].forEach(id=>{
+    $(id).addEventListener("input", updateTraca);
+    $(id).addEventListener("change", updateTraca);
+  });
+
+  // --- Sauvegarde / historique ---
+  $("btnSave").addEventListener("click", async ()=>{
+    const key = $("selRecette").value;
+    const r = RECETTES[key];
+    const q = evalQuality();
+    const record = {
+      of: $("ofNum").value,
+      recette: r.nom,
+      volume: r.vol,
+      operateur: $("operateur").value,
+      lots: currentSelection,
+      lotErrors: currentSelectionErrors,
+      qualite: q,
+      observations: $("observations").value,
+      conforme: q.conforme && Object.keys(currentSelectionErrors).length===0,
+      date: new Date().toISOString()
+    };
+    try{
+      await store.set("of:"+record.of, JSON.stringify(record), false);
+      alert("Fiche de traçabilité enregistrée pour "+record.of+".\nÀ transmettre au poste PC pour clôture de l'OF.");
+    }catch(e){
+      alert("Erreur d'enregistrement : "+e);
+    }
+  });
+
+  $("btnHistory").addEventListener("click", async ()=>{
+    const card = $("historyCard");
+    card.style.display = card.style.display==="none" ? "block":"none";
+    if(card.style.display==="block"){
+      try{
+        const list = await store.list("of:", false);
+        const items = list && list.keys ? list.keys : [];
+        let html = items.length ? "" : "Aucun OF enregistré pour l'instant.";
+        for(const k of items){
+          try{
+            const r = await store.get(k, false);
+            const rec = JSON.parse(r.value);
+            html += `<div class="history-item"><span>${rec.of} — ${rec.recette}</span>
+              <span class="pill ${rec.conforme?'pill-ok':'pill-bad'}">${rec.conforme?'Conforme':'Non conforme'}</span></div>`;
+          }catch(e){}
+        }
+        $("historyList").innerHTML = html;
+      }catch(e){
+        $("historyList").innerHTML = "Historique indisponible.";
+      }
+    }
+  });
+
+  initRecetteSelect();
+})();
+</script>
